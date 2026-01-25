@@ -16,7 +16,7 @@ This project implements a full workflow for a 4‑mecanum wheeled robot:
 ## Hardware Schematic
 
 
-![Robot schematic](docs/schematic.png)
+![Robot schematic](docs/schematic.JPEG)
 
 ---
 
