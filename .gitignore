@@ -1,0 +1,8 @@
+build/
+devel/
+install/
+*.log
+*.bag
+__pycache__/
+*.pyc
+.vscode/

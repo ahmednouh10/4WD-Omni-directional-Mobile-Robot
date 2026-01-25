@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="wheel_radius" value="0.04"/> 
+  <xacro:property name="wheel_width" value="0.045"/>
+  <xacro:property name="wheel_mass" value="0.4"/>
+  
+  <xacro:property name="num_rollers" value="9"/>
+  <xacro:property name="roller_radius_max" value="0.006"/> 
+  <xacro:property name="roller_radius_min" value="0.005"/> 
+  <xacro:property name="roller_length_total" value="0.04"/>
+  
+  <xacro:property name="plate_thickness" value="0.002"/>
+  <xacro:property name="plate_radius" value="0.035"/> 
+
+  <xacro:macro name="roller_visual" params="name parent_link angle roller_angle">
+    <link name="${name}_roller_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/> 
+        <geometry>
+          <cylinder length="${roller_length_total * 0.4}" radius="${roller_radius_max}"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+      
+      <visual>
+        <origin xyz="0 -${roller_length_total * 0.3} 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder length="${roller_length_total * 0.3}" radius="${roller_radius_min}"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+
+      <visual>
+        <origin xyz="0 ${roller_length_total * 0.3} 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder length="${roller_length_total * 0.3}" radius="${roller_radius_min}"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+    </link>
+
+    <joint name="${name}_roller_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_roller_link"/>
+      <origin xyz="${(plate_radius - 0.002)*cos(angle)} ${(plate_radius - 0.002)*sin(angle)} 0" 
+              rpy="${roller_angle} 0 ${angle}"/>
+    </joint>
+  </xacro:macro>
+  
+  <xacro:macro name="create_rollers" params="name parent_link roller_angle count">
+    <xacro:if value="${count > 0}">
+      <xacro:property name="angle" value="${(count-1) * (2*pi/num_rollers)}"/>
+      <xacro:roller_visual name="${name}_${count}" parent_link="${parent_link}" angle="${angle}" roller_angle="${roller_angle}"/>
+      <xacro:create_rollers name="${name}" parent_link="${parent_link}" roller_angle="${roller_angle}" count="${count-1}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <xacro:macro name="mecanum_wheel" params="name parent xyz rpy roller_angle">
+    
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="0 0 ${wheel_width/2 - plate_thickness/2}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="${plate_thickness}" radius="${plate_radius}"/>
+        </geometry>
+        <material name="silver"/>
+      </visual>
+
+      <visual>
+        <origin xyz="0 0 -${wheel_width/2 - plate_thickness/2}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="${plate_thickness}" radius="${plate_radius}"/>
+        </geometry>
+        <material name="silver"/>
+      </visual>
+      
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="${wheel_width}" radius="${plate_radius * 0.6}"/>
+        </geometry>
+        <material name="silver"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="${wheel_width}" radius="${wheel_radius}"/>
+        </geometry>
+      </collision>
+      
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="${(1/12)*wheel_mass*(3*wheel_radius*wheel_radius + wheel_width*wheel_width)}" 
+                 ixy="0" ixz="0" 
+                 iyy="${(1/12)*wheel_mass*(3*wheel_radius*wheel_radius + wheel_width*wheel_width)}" 
+                 iyz="0" 
+                 izz="${(1/2)*wheel_mass*wheel_radius*wheel_radius}"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="continuous">
+      <parent link="${parent}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+    
+    <xacro:create_rollers name="${name}" parent_link="${name}_link" roller_angle="${roller_angle}" count="${num_rollers}"/>
+
+    <gazebo reference="${name}_link">
+      <material>Gazebo/Grey</material>
+      <mu1>0.0</mu1>
+      <mu2>0.0</mu2>
+    </gazebo>
+
+  </xacro:macro>
+</robot>

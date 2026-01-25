@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<robot name="mecanum_bot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find mecanum_bot)/urdf/materials.xacro" />
+  <xacro:include filename="$(find mecanum_bot)/urdf/mecanum_wheel.xacro" />
+
+  <xacro:property name="wheel_offset_x" value="0.073"/>
+  <xacro:property name="wheel_offset_y" value="0.0955"/>
+  <xacro:property name="wheel_offset_z" value="0.0"/>
+
+  <xacro:property name="chassis_length" value="0.268"/> 
+  <xacro:property name="chassis_width" value="0.146"/>  
+  <xacro:property name="pallet_thickness" value="0.01"/>
+  <xacro:property name="layer_gap" value="0.04"/>
+  <xacro:property name="chassis_mass" value="2.0"/>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${pallet_thickness/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${pallet_thickness}"/>
+      </geometry>
+      <material name="wood_color">
+        <color rgba="0.6 0.4 0.2 1"/> 
+      </material>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 ${pallet_thickness + layer_gap + pallet_thickness/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${pallet_thickness}"/>
+      </geometry>
+      <material name="wood_color"/>
+    </visual>
+
+    <visual>
+      <origin xyz="${chassis_length/2 - 0.02} ${chassis_width/2 - 0.02} ${pallet_thickness + layer_gap/2}" rpy="0 0 0"/>
+      <geometry><cylinder length="${layer_gap}" radius="0.005"/></geometry>
+      <material name="silver"/>
+    </visual>
+    <visual>
+      <origin xyz="-${chassis_length/2 - 0.02} ${chassis_width/2 - 0.02} ${pallet_thickness + layer_gap/2}" rpy="0 0 0"/>
+      <geometry><cylinder length="${layer_gap}" radius="0.005"/></geometry>
+      <material name="silver"/>
+    </visual>
+    <visual>
+      <origin xyz="${chassis_length/2 - 0.02} -${chassis_width/2 - 0.02} ${pallet_thickness + layer_gap/2}" rpy="0 0 0"/>
+      <geometry><cylinder length="${layer_gap}" radius="0.005"/></geometry>
+      <material name="silver"/>
+    </visual>
+    <visual>
+      <origin xyz="-${chassis_length/2 - 0.02} -${chassis_width/2 - 0.02} ${pallet_thickness + layer_gap/2}" rpy="0 0 0"/>
+      <geometry><cylinder length="${layer_gap}" radius="0.005"/></geometry>
+      <material name="silver"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${layer_gap/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${layer_gap + pallet_thickness*2}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="${chassis_mass}"/>
+      <origin xyz="0 0 0.025"/>
+      <inertia ixx="0.004" ixy="0" ixz="0" iyy="0.007" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+  
+  <gazebo reference="base_link">
+    <material>Gazebo/Wood</material>
+  </gazebo>
+
+  <xacro:mecanum_wheel name="front_left_wheel" parent="base_link" 
+    xyz="${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" 
+    rpy="-${pi/2} 0 0" 
+    roller_angle="${pi/4}"/>
+
+  <xacro:mecanum_wheel name="front_right_wheel" parent="base_link" 
+    xyz="${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" 
+    rpy="-${pi/2} 0 0" 
+    roller_angle="-${pi/4}"/>
+
+  <xacro:mecanum_wheel name="rear_left_wheel" parent="base_link" 
+    xyz="-${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" 
+    rpy="-${pi/2} 0 0" 
+    roller_angle="-${pi/4}"/>
+
+  <xacro:mecanum_wheel name="rear_right_wheel" parent="base_link" 
+    xyz="-${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" 
+    rpy="-${pi/2} 0 0" 
+    roller_angle="${pi/4}"/>
+
+  <gazebo>
+    <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+      <ros>
+        <remapping>cmd_vel:=cmd_vel</remapping>
+        <remapping>odom:=odom</remapping>
+      </ros>
+      <update_rate>100</update_rate>
+      <publish_rate>10</publish_rate>
+      <robot_base_frame>base_link</robot_base_frame>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+    </plugin>
+
+    <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
+      <ros>
+        <remapping>joint_states:=joint_states</remapping>
+      </ros>
+      <update_rate>30</update_rate>
+      <joint_name>front_left_wheel_joint</joint_name>
+      <joint_name>front_right_wheel_joint</joint_name>
+      <joint_name>rear_left_wheel_joint</joint_name>
+      <joint_name>rear_right_wheel_joint</joint_name>
+    </plugin>
+  </gazebo>
+
+</robot>
